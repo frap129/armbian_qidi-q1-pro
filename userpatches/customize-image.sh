@@ -12,35 +12,32 @@ RELEASE=$1
 FAMILY=$2
 BOARD=$3
 BUILD_DESKTOP=$4
-ARCH=`dpkg --print-architecture`
+ARCH=$(dpkg --print-architecture)
 
 USER="mks"
 PASS="mks"
 
 user_setup() {
-    useradd -m $USER
-    echo "$USER:$PASS" | chpasswd
+	useradd -m $USER
+	echo "$USER:$PASS" | chpasswd
 
-    echo "root:$PASS" | chpasswd
+	echo "root:$PASS" | chpasswd
 }
 
 expire_passwds() {
-    passwd --expire $USER
-    passwd --expire root
+	passwd --expire $USER
+	passwd --expire root
 }
 
 wifi_driver_setup() {
 	cd /tmp
-    #git clone https://github.com/OpenIPC/aic8800
-    git clone https://github.com/Thedemon007/aic8800
-    cd aic8800/aic8800
-    #sed -i 's|stddef.h|linux/stddef.h|g' aic_load_fw/aicbluetooth_cmds.c
-    local kernel=$(find /lib/modules/* -type 'd' | head -n 1 | rev | cut -d/ -f1 | rev)
-    #cp /usr/lib/gcc/aarch64-linux-gnu/12/include/stddef.h /lib/modules/${kernel}/build/include
-	make CONFIG_PLATFORM_UBUNTU=n KVER=${kernel} KDIR=/lib/modules/${kernel}/build PWD=$(pwd) \
-		MODDESTDIR=/lib/modules/${kernel}/kernel/drivers/net/wireless/aic8800 ARCH=arm64 modules install
-	echo "aic8800_fdrv" > /etc/modules-load.d/wifi.conf
-	cd ..
+	git clone https://github.com/lynxlikenation/aic8800.git
+	cd aic8800/drivers/aic8800
+	sed -i "s|vendor/etc"
+	local kernel=$(find /lib/modules/* -type 'd' | head -n 1 | rev | cut -d/ -f1 | rev)
+	find . -name Makefile | xargs sed -i "s/\$(shell uname -r)/${kernel}/g"
+	make ARCH=arm64 modules install
+	cd ../../
 	cp -rf ./fw/aic8800DC /lib/firmware/
 	cp ./tools/aic.rules /etc/udev/rules.d
 }
