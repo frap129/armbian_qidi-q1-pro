@@ -18,7 +18,7 @@ USER="mks"
 PASS="mks"
 
 user_setup() {
-	useradd -m $USER
+	useradd -m -s /usr/bin/bash -G tty,dialout,video $USER
 	echo "$USER:$PASS" | chpasswd
 
 	echo "root:$PASS" | chpasswd
@@ -42,7 +42,33 @@ wifi_driver_setup() {
 	cp ./tools/aic.rules /etc/udev/rules.d
 }
 
-user_setup
-wifi_driver_setup
+kiauh_setup() {
+	cd /home/$USER
+	git clone https://github.com/dw-0/kiauh
+	KIAUH_SRCDIR="${HOME}/kiauh"
+	source ./kiauh/scripts/ui/general_ui.sh
+	source ./kiauh/scripts/globals.sh
+	source ./kiauh/scripts/utilities.sh
+	source ./kiauh/scripts/klipper.sh
+
+	set_globals
+	run_klipper_setup 3 printer
+}
+
+kiauh_setup_root() {
+	echo "$USER ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$USER
+	echo "Running kiauh setup"
+	su $USER -c "/tmp/customize-image.sh"
+	echo "Done with kiauh setup"
+	sed -i "s/ NOPASSWD://g" /etc/sudoers.d/$USER
+}
+
+if [[ "$(whoami)" == "root" ]]; then
+	user_setup
+	wifi_driver_setup
+	kiauh_setup_root
+elif [[ "$(whoami)" == "$USER" ]]; then
+	kiauh_setup
+fi
 
 #expire_passwds
