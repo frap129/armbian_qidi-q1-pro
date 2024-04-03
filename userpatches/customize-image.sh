@@ -55,16 +55,19 @@ prepare_kiauh_env() {
 }
 
 klipper_setup() {
+	cd /home/$USER
 	source $KIAUH_SRCDIR/scripts/klipper.sh
 	run_klipper_setup 3 printer
 }
 
 moonraker_setup() {
+	cd /home/$USER
 	source $KIAUH_SRCDIR/scripts/moonraker.sh
 	moonraker_setup 1
 }
 
 fluidd_setup() {
+	cd /home/$USER
 	source $KIAUH_SRCDIR/scripts/backup.sh
 	source $KIAUH_SRCDIR/scripts/moonraker.sh
 	source $KIAUH_SRCDIR/scripts/nginx.sh
@@ -72,8 +75,26 @@ fluidd_setup() {
 	yes | install_fluidd
 }
 
+crowsnest_setup() {
+	cd /home/$USER
+	sed -i 's/make install/make install CROWSNEST_UNATTENDED=1 CROWSNEST_ADD_CROWSNEST_MOONRAKER=1/g' \
+		$KIAUH_SRCDIR/scripts/crowsnest.sh
+	source $KIAUH_SRCDIR/scripts/crowsnest.sh
+	export CROWSNEST_UNATTENDED=1 CROWSNEST_ADD_CROWSNEST_MOONRAKER=1
+	install_crowsnest
+	sed -i 's/ CROWSNEST_UNATTENDED=1 CROWSNEST_ADD_CROWSNEST_MOONRAKER=1//g' \
+		$KIAUH_SRCDIR/scripts/crowsnest.sh
+}
+
+timelapse_setup() {
+	cd /home/$USER
+	git clone https://github.com/mainsail-crew/moonraker-timelapse.git
+	cd ~/moonraker-timelapse
+	yes | make install
+}
+
 misc_setup() {
-	prepare_kiauh_env
+	cd /home/$USER
 	source $KIAUH_SRCDIR/scripts/gcode_shell_command.sh
 	source $KIAUH_SRCDIR/scripts/pretty_gcode.sh
 	yes n | install_gcode_shell_command
@@ -96,6 +117,8 @@ elif [[ "$(whoami)" == "$USER" ]]; then
 	klipper_setup
 	moonraker_setup
 	fluidd_setup
+	crowsnest_setup
+	timelapse_setup
 	misc_setup
 fi
 
