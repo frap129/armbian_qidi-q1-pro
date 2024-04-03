@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # arguments: $RELEASE $FAMILY $BOARD $BUILD_DESKTOP
 #
 # This is the image customization script
@@ -18,9 +17,9 @@ USER="mks"
 PASS="mks"
 
 user_setup() {
-	useradd -m -s /usr/bin/bash -G tty,dialout,video $USER
+	local groups="netdev,audio,video,disk,tty,users,dialout,plugdev,input"
+	useradd -m -s /usr/bin/bash -G ${groups} $USER
 	echo "$USER:$PASS" | chpasswd
-
 	echo "root:$PASS" | chpasswd
 }
 
@@ -33,7 +32,6 @@ wifi_driver_setup() {
 	cd /tmp
 	git clone https://github.com/lynxlikenation/aic8800.git
 	cd aic8800/drivers/aic8800
-	sed -i "s|vendor/etc"
 	local kernel=$(find /lib/modules/* -type 'd' | head -n 1 | rev | cut -d/ -f1 | rev)
 	find . -name Makefile | xargs sed -i "s/\$(shell uname -r)/${kernel}/g"
 	make ARCH=arm64 modules install
@@ -45,21 +43,46 @@ wifi_driver_setup() {
 kiauh_setup() {
 	cd /home/$USER
 	git clone https://github.com/dw-0/kiauh
-	KIAUH_SRCDIR="${HOME}/kiauh"
-	source ./kiauh/scripts/ui/general_ui.sh
-	source ./kiauh/scripts/globals.sh
-	source ./kiauh/scripts/utilities.sh
-	source ./kiauh/scripts/klipper.sh
+}
 
+prepare_kiauh_env() {
+	cd /home/$USER
+	KIAUH_SRCDIR="${HOME}/kiauh"
+	source $KIAUH_SRCDIR/scripts/ui/general_ui.sh
+	source $KIAUH_SRCDIR/scripts/globals.sh
+	source $KIAUH_SRCDIR/scripts/utilities.sh
 	set_globals
+}
+
+klipper_setup() {
+	source $KIAUH_SRCDIR/scripts/klipper.sh
 	run_klipper_setup 3 printer
+}
+
+moonraker_setup() {
+	source $KIAUH_SRCDIR/scripts/moonraker.sh
+	moonraker_setup 1
+}
+
+fluidd_setup() {
+	source $KIAUH_SRCDIR/scripts/backup.sh
+	source $KIAUH_SRCDIR/scripts/moonraker.sh
+	source $KIAUH_SRCDIR/scripts/nginx.sh
+	source $KIAUH_SRCDIR/scripts/fluidd.sh
+	yes | install_fluidd
+}
+
+misc_setup() {
+	prepare_kiauh_env
+	source $KIAUH_SRCDIR/scripts/gcode_shell_command.sh
+	source $KIAUH_SRCDIR/scripts/pretty_gcode.sh
+	yes n | install_gcode_shell_command
+	yes 7136 | install_pgc_for_klipper
 }
 
 kiauh_setup_root() {
 	echo "$USER ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$USER
-	echo "Running kiauh setup"
 	su $USER -c "/tmp/customize-image.sh"
-	echo "Done with kiauh setup"
 	sed -i "s/ NOPASSWD://g" /etc/sudoers.d/$USER
 }
 
@@ -69,6 +92,11 @@ if [[ "$(whoami)" == "root" ]]; then
 	kiauh_setup_root
 elif [[ "$(whoami)" == "$USER" ]]; then
 	kiauh_setup
+	prepare_kiauh_env
+	klipper_setup
+	moonraker_setup
+	fluidd_setup
+	misc_setup
 fi
 
 #expire_passwds
