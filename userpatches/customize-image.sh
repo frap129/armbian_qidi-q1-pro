@@ -40,6 +40,12 @@ wifi_driver_setup() {
 	cp ./tools/aic.rules /etc/udev/rules.d
 }
 
+misc_root_setup() {
+	# Allow user to access the hotend serial device
+	echo 'KERNEL=="ttyS2",MODE="0660"' > /etc/udev/rules.d/99-q1-pro.rules
+	systemctl mask serial-getty@ttyS2.service
+}
+
 kiauh_setup() {
 	cd /home/$USER
 	git clone https://github.com/dw-0/kiauh
@@ -110,6 +116,7 @@ kiauh_setup_root() {
 if [[ "$(whoami)" == "root" ]]; then
 	user_setup
 	wifi_driver_setup
+	misc_root_setup
 	kiauh_setup_root
 elif [[ "$(whoami)" == "$USER" ]]; then
 	kiauh_setup
