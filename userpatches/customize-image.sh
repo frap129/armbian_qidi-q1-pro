@@ -83,28 +83,42 @@ fluidd_setup() {
 
 crowsnest_setup() {
 	cd /home/$USER
-	sed -i 's/make install/make install CROWSNEST_UNATTENDED=1 CROWSNEST_ADD_CROWSNEST_MOONRAKER=1/g' \
-		$KIAUH_SRCDIR/scripts/crowsnest.sh
-	source $KIAUH_SRCDIR/scripts/crowsnest.sh
-	export CROWSNEST_UNATTENDED=1 CROWSNEST_ADD_CROWSNEST_MOONRAKER=1
-	install_crowsnest
-	sed -i 's/ CROWSNEST_UNATTENDED=1 CROWSNEST_ADD_CROWSNEST_MOONRAKER=1//g' \
-		$KIAUH_SRCDIR/scripts/crowsnest.sh
+	export CROWSNEST_UNATTENDED=1
+	git clone https://github.com/mainsail-crew/crowsnest
+	cd crowsnest
+	sudo CROWSNEST_UNATTENDED=1 make install
 }
 
 timelapse_setup() {
 	cd /home/$USER
 	git clone https://github.com/mainsail-crew/moonraker-timelapse.git
-	cd ~/moonraker-timelapse
+	cd /home/$USER/moonraker-timelapse
 	yes | make install
+}
+
+auto_z_offset_setup() {
+	cd /home/$USER
+	git clone https://github.com/frap129/qidi_auto_z_offset
+	ln -s /home/$USER/qidi_auto_z_offset/auto_z_offset.py /home/$USER/klipper/klippy/extras/auto_z_offset.py
+}
+
+config_setup() {
+	cd /home/$USER
+	git clone https://github.com/frap129/q1-pro-klipper-config
+	cd q1-pro-klipper-config
+	./install
+
+	# Setup KAMP
+	cd /home/$USER
+	git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git
+	ln -s /home/$USER/Klipper-Adaptive-Meshing-Purging/Configuration /home/$USER/q1-pro-klipper-config//config/KAMP
+	cp /home/$USER/Klipper-Adaptive-Meshing-Purging/Configuration/KAMP_Settings.cfg /home/$USER/q1-pro-klipper-config/config/KAMP_Settings.cfg
 }
 
 misc_setup() {
 	cd /home/$USER
 	source $KIAUH_SRCDIR/scripts/gcode_shell_command.sh
-	source $KIAUH_SRCDIR/scripts/pretty_gcode.sh
 	yes n | install_gcode_shell_command
-	yes 7136 | install_pgc_for_klipper
 }
 
 kiauh_setup_root() {
@@ -118,6 +132,7 @@ if [[ "$(whoami)" == "root" ]]; then
 	wifi_driver_setup
 	misc_root_setup
 	kiauh_setup_root
+	#expire_passwds
 elif [[ "$(whoami)" == "$USER" ]]; then
 	kiauh_setup
 	prepare_kiauh_env
@@ -126,7 +141,7 @@ elif [[ "$(whoami)" == "$USER" ]]; then
 	fluidd_setup
 	crowsnest_setup
 	timelapse_setup
+	auto_z_offset_setup
+	config_setup
 	misc_setup
 fi
-
-#expire_passwds
