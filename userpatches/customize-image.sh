@@ -106,16 +106,21 @@ config_setup() {
 	cd /home/$USER
 	git clone https://github.com/frap129/q1-pro-klipper-config
 	cd q1-pro-klipper-config
-	./install
+	./install.sh /home/$USER/printer_data/config
 
 	# Setup KAMP
 	cd /home/$USER
 	git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git
-	ln -s /home/$USER/Klipper-Adaptive-Meshing-Purging/Configuration /home/$USER/q1-pro-klipper-config//config/KAMP
+	ln -s /home/$USER/Klipper-Adaptive-Meshing-Purging/Configuration /home/$USER/q1-pro-klipper-config/config/KAMP
 	cp /home/$USER/Klipper-Adaptive-Meshing-Purging/Configuration/KAMP_Settings.cfg /home/$USER/q1-pro-klipper-config/config/KAMP_Settings.cfg
 }
 
-misc_setup() {
+shaketune_setup() {
+	cd /home/$USER
+	wget -O - https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh | bash
+}
+
+shellcmd_setup() {
 	cd /home/$USER
 	source $KIAUH_SRCDIR/scripts/gcode_shell_command.sh
 	yes n | install_gcode_shell_command
@@ -143,5 +148,6 @@ elif [[ "$(whoami)" == "$USER" ]]; then
 	timelapse_setup
 	auto_z_offset_setup
 	config_setup
-	misc_setup
+	shellcmd_setup
+	shaketune_setup
 fi
