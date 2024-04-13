@@ -64,6 +64,7 @@ klipper_setup() {
 	cd /home/$USER
 	source $KIAUH_SRCDIR/scripts/klipper.sh
 	run_klipper_setup 3 printer
+	/home/$USER/klippy-env/bin/pip install numpy
 }
 
 moonraker_setup() {
@@ -117,7 +118,12 @@ config_setup() {
 
 shaketune_setup() {
 	cd /home/$USER
-	wget -O - https://raw.githubusercontent.com/Frix-x/klippain-shaketune/main/install.sh | bash
+	git clone https://github.com/Frix-x/klippain-shaketune/ klippain_shaketune
+	sed -i "s/preflight_checks\n/exit 0\n/g" klippain_shaketune/install.sh
+	source klippain_shaketune/install.sh
+	setup_venv
+	link_extension
+	sed -i "s/exit 0/preflight_checks/g" klippain_shaketune/install.sh
 }
 
 shellcmd_setup() {
@@ -149,5 +155,5 @@ elif [[ "$(whoami)" == "$USER" ]]; then
 	auto_z_offset_setup
 	config_setup
 	shellcmd_setup
-	shaketune_setup
+	#shaketune_setup
 fi
