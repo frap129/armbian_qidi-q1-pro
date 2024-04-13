@@ -119,11 +119,12 @@ config_setup() {
 shaketune_setup() {
 	cd /home/$USER
 	git clone https://github.com/Frix-x/klippain-shaketune/ klippain_shaketune
-	sed -i "s/preflight_checks\n/exit 0\n/g" klippain_shaketune/install.sh
-	source klippain_shaketune/install.sh
-	setup_venv
-	link_extension
-	sed -i "s/exit 0/preflight_checks/g" klippain_shaketune/install.sh
+	cd klippain_shaketune
+	head -n -9 install.sh > tmp-install.sh
+	echo "setup_venv
+	link_extension" >> tmp-install.sh
+	source tmp-install.sh
+	rm tmp-install.sh
 }
 
 shellcmd_setup() {
@@ -155,5 +156,5 @@ elif [[ "$(whoami)" == "$USER" ]]; then
 	auto_z_offset_setup
 	config_setup
 	shellcmd_setup
-	#shaketune_setup
+	shaketune_setup
 fi

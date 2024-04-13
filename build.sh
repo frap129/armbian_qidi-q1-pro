@@ -7,7 +7,7 @@ PACKAGES="eject virtualenv python3-dev python3-serial libffi-dev build-essential
     nginx crudini libbsd-dev libevent-2.1-7 libevent-dev libevent-extra-2.1-7
     libevent-openssl-2.1-7 libevent-pthreads-2.1-7 libjpeg-dev libmd-dev libv4l-0
     libv4l2rds0 libv4lconvert0 python3-iniparse v4l-utils ffmpeg libopenblas-dev
-    libatlas-base-dev"
+    libatlas-base-dev python3.11-venv"
 
 # This needs to be set based on the number of packages
 REFS=""
