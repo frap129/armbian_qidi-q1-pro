@@ -112,8 +112,8 @@ config_setup() {
 	# Setup KAMP
 	cd /home/$USER
 	git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git
-	ln -s /home/$USER/Klipper-Adaptive-Meshing-Purging/Configuration /home/$USER/q1-pro-klipper-config/config/KAMP
-	cp /home/$USER/Klipper-Adaptive-Meshing-Purging/Configuration/KAMP_Settings.cfg /home/$USER/q1-pro-klipper-config/config/KAMP_Settings.cfg
+	ln -s /home/$USER/Klipper-Adaptive-Meshing-Purging/Configuration /home/$USER/printer_data/config/KAMP
+	cp /home/$USER/Klipper-Adaptive-Meshing-Purging/Configuration/KAMP_Settings.cfg /home/$USER/printer_data/config/KAMP_Settings.cfg
 }
 
 shaketune_setup() {
