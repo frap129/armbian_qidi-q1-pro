@@ -14,7 +14,7 @@ REFS=""
 for PKG in $PACKAGES; do REFS+="build:compile.sh:0 "; done
 
 ./compile.sh \
-	BOARD=mkspi \
+	BOARD=qidi-q1 \
 	BRANCH=current \
 	RELEASE=bookworm \
 	BSPFREEZE=yes \
