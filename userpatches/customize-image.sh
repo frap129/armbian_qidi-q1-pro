@@ -28,6 +28,17 @@ expire_passwds() {
 	passwd --expire root
 }
 
+deb-get_setup() {
+	curl -sL https://raw.githubusercontent.com/wimpysworld/deb-get/main/deb-get | sudo -E bash -s install deb-get
+	cp -R /tmp/overlay/pkgs /etc/deb-get/99-local.d
+	deb-get update --repos-only
+	sleep 5
+}
+
+wifi_driver_dkms_setup() {
+	deb-get install aic8800-usb-dkms aic8800-firmware
+}
+
 wifi_driver_setup() {
 	cd /tmp
 	git clone https://github.com/lynxlikenation/aic8800.git
@@ -141,7 +152,9 @@ kiauh_setup_root() {
 
 if [[ "$(whoami)" == "root" ]]; then
 	user_setup
-	wifi_driver_setup
+	deb-get_setup
+	wifi_driver_dkms_setup
+	#wifi_driver_setup
 	misc_root_setup
 	kiauh_setup_root
 	#expire_passwds
