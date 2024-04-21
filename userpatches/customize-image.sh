@@ -105,8 +105,8 @@ auto_z_offset_setup() {
 
 config_setup() {
 	cd /home/$USER
-	git clone https://github.com/frap129/q1-pro-klipper-config
-	cd q1-pro-klipper-config
+	git clone https://github.com/frap129/openq1
+	cd openq1
 	./install.sh /home/$USER/printer_data/config
 
 	# Setup KAMP
