@@ -1,0 +1,176 @@
+name: Build Armbian for QIDI Q1 Pro
+on:
+  # on every monday at 3:30
+  #schedule:
+  #  - cron:  '30 3 * * 1'
+
+  # build a new release on push a new config file
+  #push:
+  #branches:
+  #    - "master"
+  #  paths:
+  #    - "configs/*"
+
+  # enable manual start of this workflow
+  workflow_dispatch:
+
+# Allow to stop obsolete workflows
+concurrency:
+  group: ci-build-release-${{ github.ref }}-1
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      id: ${{ steps.release.outputs.id }}
+      tag_name: ${{ steps.time.outputs.time }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: build
+          fetch-depth: 0
+
+      - name: Get armbian version
+        id: armbian-version
+        run: |
+          sed -i 's/-trunk//' ./build/VERSION
+          VERSION=$(cat ./build/VERSION)
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Get time
+        id: time
+        uses: nanzm/get-time-action@v2.0
+        with:
+          format: 'YYYYMMDD-HHmm'
+
+      - name: Create empty release
+        id: release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.armbian-version.outputs.version }}-${{ steps.time.outputs.time }}
+          tag_name: ${{ steps.time.outputs.time }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: true
+
+  build-armbian:
+    name: Armbian
+    needs: [release]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Free Github Runner
+        uses: descriptinc/free-disk-space@main
+        with:
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Checkout armbian Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          path: build
+
+      - name: sed VERSION
+        shell: bash
+        run: |
+          sed -i 's/-trunk//' ./build/VERSION
+          echo "::group::Output VERSION"
+          cat ./build/VERSION
+          echo "::endgroup::"
+
+      - name: Build Image
+        shell: bash
+        run: |
+          cd ./build
+          ./build.sh
+
+      - name: Fix userrights
+        shell: bash
+        run: |
+          WORKSPACE=$(echo ${{ github.workspace }})
+          sudo chown -R $USER:$USER $WORKSPACE/build || true
+          sudo chmod 0777 -R $WORKSPACE/build || true
+          sudo df
+
+      - name: Rename Files
+        run: |
+          WORKSPACE=$(echo ${{ github.workspace }})
+          cd $WORKSPACE/build/output/images/
+          mv *.img Armbian-QIDI-Q1-Pro.img
+          mv *.txt Armbian-QIDI-Q1-Pro.txt
+
+      - name: Compressing Image
+        run: |
+          WORKSPACE=$(echo ${{ github.workspace }})
+          cd $WORKSPACE/build/output/images/
+          xz -efkvz Armbian-QIDI-Q1-Pro.img || true
+
+      - name: Calculating checksums
+        run: |
+          WORKSPACE=$(echo ${{ github.workspace }})
+          cd $WORKSPACE/build/output/images/
+          sha256sum Armbian-QIDI-Q1-Pro.img.sha256
+          sha256sum Armbian-QIDI-Q1-Pro.img.xz > Armbian-QIDI-Q1-Pro.img.xz.sha256
+
+      - name: Upload Image to Release
+        if: needs.release.outputs.id != ''
+        uses: xresloader/upload-to-github-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ needs.release.outputs.id }}
+          file: ./build/output/images/*.img.xz
+          draft: true
+
+      - name: Upload Checksum to Release
+        if: needs.release.outputs.id != ''
+        uses: xresloader/upload-to-github-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ needs.release.outputs.id }}
+          file: ./build/output/images/*.sha256
+          draft: true
+
+      - name: Upload Config to Release
+        if: needs.release.outputs.id != ''
+        uses: xresloader/upload-to-github-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ needs.release.outputs.id }}
+          file: ./build/output/images/*.txt
+          draft: true
+
+  finish:
+    name: Finish Build
+    needs: [release, build-armbian]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish Release
+        uses: eregon/publish-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ needs.release.outputs.id }}
+
+  cleanup:
+    name: Cleanup Build
+    needs: [release, build-armbian]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete drafts
+        uses: hugo19941994/delete-draft-releases@v1.0.0
+        with:
+          threshold: 2d
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
