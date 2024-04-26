@@ -107,8 +107,9 @@ jobs:
           cd $WORKSPACE/out
           xz -efkvz $WORKSPACE/build/output/images/*.img || true
           cp $WORKSPACE/build/output/images/*.txt .
-          cp $WORKSPACE/build/output/images/linux-*.deb .
-          for file in ./*; do sha256sum ${file} > ${file}.sha256; done
+          cp $WORKSPACE/build/output/debs/linux-*.deb .
+          for file in ./*.xz; do sha512sum ${file} > ${file}.sha512; done
+          for file in ./*.debs; do sha512sum ${file} > ${file}.sha512; done
 
 
       - name: Upload Outputs to Release
