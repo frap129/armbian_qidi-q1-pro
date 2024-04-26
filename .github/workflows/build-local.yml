@@ -100,54 +100,25 @@ jobs:
           sudo chmod 0777 -R $WORKSPACE/build || true
           sudo df
 
-      - name: Rename Files
+      - name: Package Output Files
         run: |
           WORKSPACE=$(echo ${{ github.workspace }})
-          cd $WORKSPACE/build/output/images/
-          mv *.img Armbian-QIDI-Q1-Pro.img
-          mv *.txt Armbian-QIDI-Q1-Pro.txt
+          mkdir $WORKSPACE/out
+          cd $WORKSPACE/out
+          xz -efkvz $WORKSPACE/build/output/images/*.img || true
+          cp $WORKSPACE/build/output/images/*.txt .
+          cp $WORKSPACE/build/output/images/linux-*.deb .
+          for file in ./*; do sha256sum ${file} > ${file}.sha256; done
 
-      - name: Compressing Image
-        run: |
-          WORKSPACE=$(echo ${{ github.workspace }})
-          cd $WORKSPACE/build/output/images/
-          xz -efkvz Armbian-QIDI-Q1-Pro.img || true
 
-      - name: Calculating checksums
-        run: |
-          WORKSPACE=$(echo ${{ github.workspace }})
-          cd $WORKSPACE/build/output/images/
-          sha256sum Armbian-QIDI-Q1-Pro.img.sha256
-          sha256sum Armbian-QIDI-Q1-Pro.img.xz > Armbian-QIDI-Q1-Pro.img.xz.sha256
-
-      - name: Upload Image to Release
+      - name: Upload Outputs to Release
         if: needs.release.outputs.id != ''
         uses: xresloader/upload-to-github-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           release_id: ${{ needs.release.outputs.id }}
-          file: ./build/output/images/*.img.xz
-          draft: true
-
-      - name: Upload Checksum to Release
-        if: needs.release.outputs.id != ''
-        uses: xresloader/upload-to-github-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          release_id: ${{ needs.release.outputs.id }}
-          file: ./build/output/images/*.sha256
-          draft: true
-
-      - name: Upload Config to Release
-        if: needs.release.outputs.id != ''
-        uses: xresloader/upload-to-github-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          release_id: ${{ needs.release.outputs.id }}
-          file: ./build/output/images/*.txt
+          file: ./build/output/images/*
           draft: true
 
   finish:
