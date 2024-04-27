@@ -100,6 +100,12 @@ jobs:
           sudo chmod 0777 -R $WORKSPACE/build || true
           sudo df
 
+      - name: Compressing Image
+        run: |
+          WORKSPACE=$(echo ${{ github.workspace }})
+          cd $WORKSPACE/build/output/images/
+          xz -efkvz *.img || true
+
       - name: Package Output Files
         run: |
           WORKSPACE=$(echo ${{ github.workspace }})
@@ -107,8 +113,8 @@ jobs:
           sudo chown -R $USER:$USER $WORKSPACE/out || true
           sudo chmod 0777 -R $WORKSPACE/out || true
           cd $WORKSPACE/out
-          xz -efkvz $WORKSPACE/build/output/images/*.img || true
-          cp $WORKSPACE/build/output/images/*.txt .
+          mv $WORKSPACE/build/output/images/*.txt .
+          mv $WORKSPACE/build/output/images/*.img.xz .
           mv $WORKSPACE/build/output/debs/linux-*.deb .
           for file in ./*.xz; do sha512sum ${file} > ${file}.sha512; done
           for file in ./*.debs; do sha512sum ${file} > ${file}.sha512; done
