@@ -117,7 +117,7 @@ jobs:
           mv $WORKSPACE/build/output/images/*.img.xz .
           mv $WORKSPACE/build/output/debs/linux-*.deb .
           for file in ./*.xz; do sha512sum ${file} > ${file}.sha512; done
-          for file in ./*.debs; do sha512sum ${file} > ${file}.sha512; done
+          for file in ./*.deb; do sha512sum ${file} > ${file}.sha512; done
 
 
       - name: Upload Outputs to Release
