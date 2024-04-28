@@ -49,6 +49,9 @@ misc_root_setup() {
 	# Allow user to access the hotend serial device
 	echo 'KERNEL=="ttyS2",MODE="0660"' > /etc/udev/rules.d/99-q1-pro.rules
 	systemctl mask serial-getty@ttyS2.service
+
+	# Disable ssh as root
+	sed -i "s/PermitRootLogin yes/PermitRootLogin no/g" /etc/ssh/sshd_config
 }
 
 openq1_setup_root() {
