@@ -1,0 +1,10 @@
+DEFVER=1
+ARCHS_SUPPORTED="arm64"
+get_github_releases "frap129/armbian_qidi-q1-pro/" "latest"
+if [ "${ACTION}" != "prettylist" ]; then
+    URL=$(grep "browser_download_url.*linux-headers-current-rockchip64.*\.deb\"" "${CACHE_FILE}" | head -n1 | cut -d'"' -f4)
+    VERSION_PUBLISHED="$(echo "${URL}" | cut -d'/' -f8 | tr -d v)"
+fi
+PRETTY_NAME="linux-headers-current-rockchip64"
+WEBSITE="https://github.com/frap129/armbian_qidi-q1-pro"
+SUMMARY="Kernel Headers for QIDI Q1 Pro"
